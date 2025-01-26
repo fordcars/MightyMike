@@ -3,9 +3,12 @@
 #include "PommeFiles.h"
 #include "PommeGraphics.h"
 
-#include <SDL.h>
 #include <iostream>
 #include <thread>
+
+#ifdef __3DS__
+	#include "Platform/3ds/Pomme3ds.h"
+#endif
 
 extern "C"
 {
@@ -15,7 +18,9 @@ extern "C"
 	#include "version.h"
 
 	// Satisfy externs in game code
+#ifndef __3DS__
 	SDL_Window*			gSDLWindow		= nullptr;
+#endif
 
 	// Lets the game know where to find its asset files
 	FSSpec gDataSpec;
@@ -38,6 +43,7 @@ static fs::path FindGameData(const char* executablePath)
 	if (!executablePath)
 		attemptNum = 2;
 
+#ifndef __3DS__
 tryAgain:
 	switch (attemptNum)
 	{
@@ -62,6 +68,9 @@ tryAgain:
 	attemptNum++;
 
 	dataPath = dataPath.lexically_normal();
+#elif defined __3DS__
+	dataPath = "romfs:";
+#endif
 
 	// Set data spec -- Lets the game know where to find its asset files
 	gDataSpec = Pomme::Files::HostPathToFSSpec(dataPath / "Shapes");
@@ -72,7 +81,11 @@ tryAgain:
 
 	if (resFileRefNum == -1)
 	{
+#ifdef __3DS__
+		throw std::runtime_error(std::string(gDataSpec.cName));
+#else
 		goto tryAgain;
+#endif
 	}
 
 	UseResFile(resFileRefNum);
@@ -82,9 +95,13 @@ tryAgain:
 
 static void Boot(const char* executablePath)
 {
+#ifndef __3DS__
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
+#endif
 
-#if OSXPPC
+#ifdef __3DS__
+	gNumThreads = 1;
+#elif OSXPPC
 	gNumThreads = 1;
 #else
 	gNumThreads = (int) std::thread::hardware_concurrency();
@@ -97,11 +114,13 @@ static void Boot(const char* executablePath)
 	// Start our "machine"
 	Pomme::Init();
 
+#ifndef __3DS__
 	// Initialize SDL video subsystem
 	if (0 != SDL_Init(SDL_INIT_VIDEO))
 		throw std::runtime_error("Couldn't initialize SDL video subsystem.");
+#endif
 
-#if GLRENDER
+#if GLRENDER && !(__3DS__)
 #if !(OSXPPC)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 #endif // OSXPPC
@@ -109,6 +128,7 @@ static void Boot(const char* executablePath)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 #endif // GLRENDER
 
+#ifndef __3DS__
 	// Create window
 	int windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 #if GLRENDER
@@ -123,6 +143,7 @@ static void Boot(const char* executablePath)
 			windowFlags);
 	if (!gSDLWindow)
 		throw std::runtime_error("Couldn't create SDL window.");
+#endif
 
 #if GLRENDER
 	GLRender_Init();
@@ -141,11 +162,13 @@ static void Boot(const char* executablePath)
 	SDL_Init(SDL_INIT_JOYSTICK);
 	SDL_Init(SDL_INIT_HAPTIC);
 	{
+#ifndef __3DS__
 		auto gamecontrollerdbPath8 = (dataPath / "System" / "gamecontrollerdb.txt").u8string();
 		if (-1 == SDL_GameControllerAddMappingsFromFile((const char*)gamecontrollerdbPath8.c_str()))
 		{
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Mighty Mike", "Couldn't load gamecontrollerdb.txt!", gSDLWindow);
 		}
+#endif
 	}
 #endif
 }
@@ -154,11 +177,13 @@ static void Shutdown()
 {
 	Pomme::Shutdown();
 
+#ifndef __3DS__
 	if (gSDLWindow)
 	{
 		SDL_DestroyWindow(gSDLWindow);
 		gSDLWindow = nullptr;
 	}
+#endif
 	
 	SDL_Quit();
 }
@@ -203,8 +228,13 @@ int main(int argc, char** argv)
 
 	if (showFinalErrorMessage)
 	{
+#ifdef __3DS__
+		std::cerr << "Uncaught exception: " << finalErrorMessage << std::endl;
+		while (ShouldDoMainLoop3ds()) {}
+#else
 		std::cerr << "Uncaught exception: " << finalErrorMessage << "\n";
 		SDL_ShowSimpleMessageBox(0, "Uncaught exception", finalErrorMessage.c_str(), nullptr);
+#endif
 	}
 
 	return returnCode;
