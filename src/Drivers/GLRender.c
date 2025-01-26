@@ -24,7 +24,10 @@
 #include "renderdrivers.h"
 #include "framebufferfilter.h"
 
-#if __APPLE__
+#ifdef __3DS__
+#include <GL/gl.h>
+#include <GL/glext.h>
+#elif __APPLE__
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
 #else
@@ -135,8 +138,12 @@ static void InitTextureAndPBO(int pixelZoom)
 	glGenTextures(1, &gFrameTexture);
 	CHECK_GL_ERROR();
 
+#ifdef __3DS__
+	gFramePBO = 0;
+#else
 	glGenBuffersARB(1, &gFramePBO);
 	CHECK_GL_ERROR();
+#endif
 
 #if 0
 	glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gFramePBO);
@@ -180,11 +187,13 @@ static void DeleteTextureAndPBO(void)
 		gFrameTexture = 0;
 	}
 
+#ifndef __3DS__
 	if (gFramePBO != 0)
 	{
 		glDeleteBuffersARB(1, &gFramePBO);
 		gFramePBO = 0;
 	}
+#endif
 }
 
 void GLRender_Init(void)
@@ -207,8 +216,12 @@ void GLRender_Init(void)
 	GAME_ASSERT_MESSAGE(mkc == 0, SDL_GetError());
 #endif
 
+#ifdef __3DS__
+	gMaxTextureSize = kFrameTextureWidth * 2; // Random number honestly
+#else
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gMaxTextureSize);
 	printf("Max texture size: %d\n", (int) gMaxTextureSize);
+#endif
 
 	if (gMaxTextureSize < kFrameTextureWidth)
 	{
@@ -223,7 +236,7 @@ void GLRender_Init(void)
 	gCanDoHQStretch = gMaxTextureSize >= 2*kFrameTextureWidth;
 #endif
 
-#if !__APPLE__
+#if !__APPLE__ && !__3DS__
 	GL_GET_PROC_ADDRESS(PFNGLGENBUFFERSARBPROC, glGenBuffersARB);
 	GL_GET_PROC_ADDRESS(PFNGLDELETEBUFFERSARBPROC, glDeleteBuffersARB);
 	GL_GET_PROC_ADDRESS(PFNGLBINDBUFFERARBPROC, glBindBufferARB);
@@ -344,6 +357,8 @@ void GLRender_PresentFramebuffer(void)
 	//-------------------------------------------------------------------------
 	// Update PBO
 
+#ifndef __3DS__
+	// TODO: for 3ds?
 	glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gFramePBO);
 	CHECK_GL_ERROR();
 
@@ -360,6 +375,7 @@ void GLRender_PresentFramebuffer(void)
 	ConvertFramebufferMT(mappedBuffer);
 
 	glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+#endif
 	CHECK_GL_ERROR();
 
 	//-------------------------------------------------------------------------

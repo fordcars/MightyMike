@@ -24,6 +24,10 @@
 #include "externs.h"
 #include "main.h"
 
+#ifdef __3DS__
+	#include "Platform/3ds/Pomme3ds.h"
+#endif
+
 /****************************/
 /*    PROTOTYPES             */
 /****************************/
@@ -100,7 +104,9 @@ void DoAlert(const char* s)
 {
 	fprintf(stderr, "MIKE ALERT: %s\n", s);
 
+#ifndef __3DS__
 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Mighty Mike", s, NULL);
+#endif
 }
 
 
@@ -111,7 +117,11 @@ void DoAssert(const char* msg, const char* file, int line)
 	fprintf(stderr, "MIKE ASSERTION FAILED: %s - %s:%d\n", msg, file, line);
 	static char alertbuf[1024];
 	snprintf(alertbuf, 1024, "%s\n%s:%d", msg, file, line);
+#ifdef __3DS__
+	while (ShouldDoMainLoop3ds()) {}
+#else
 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Mighty Mike: Assertion Failed!", alertbuf, NULL);
+#endif
 	ExitToShell();
 }
 
@@ -122,7 +132,11 @@ void DoFatalAlert(const char* s)
 {
 	fprintf(stderr, "MIKE FATAL ALERT: %s\n", s);
 
+#ifdef __3DS__
+	while (ShouldDoMainLoop3ds()) {}
+#else
 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Mighty Mike", s, NULL);
+#endif
 	CleanQuit();
 }
 
@@ -135,7 +149,11 @@ void DoFatalAlert2(const char* s1, const char* s2)
 	snprintf(alertbuf, 1024, "%s\n%s", s1, s2);
 	fprintf(stderr, "MIKE FATAL ALERT: %s\n", alertbuf);
 
+#ifdef __3DS__
+	while (ShouldDoMainLoop3ds()) {}
+#else
 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Mighty Mike", alertbuf, NULL);
+#endif
 	CleanQuit();
 }
 
