@@ -1262,7 +1262,11 @@ static void InitDefaultPrefs(void)
 	gGamePrefs.interlaceMode = false;
 	gGamePrefs.difficulty = DIFFICULTY_NORMAL;
 
-#if !OSXPPC
+#ifdef __3DS__
+	gGamePrefs.pfSize = PFSIZE_WIDE;
+	gGamePrefs.displayMode = kDisplayMode_FullscreenStretched;
+	gGamePrefs.filterDithering = true;
+#elif !OSXPPC
 	gGamePrefs.pfSize = PFSIZE_WIDE;
 	gGamePrefs.displayMode = kDisplayMode_FullscreenStretched;
 	gGamePrefs.filterDithering = true;

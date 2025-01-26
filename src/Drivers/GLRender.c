@@ -262,7 +262,9 @@ void GLRender_Init(void)
 
 	glDisable(GL_FOG);
 	glEnable(GL_TEXTURE_2D);
+#ifndef __3DS__
 	glEnable(GL_CULL_FACE);
+#endif
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
@@ -421,7 +423,18 @@ void GLRender_PresentFramebuffer(void)
 	const float vmax = vh * (1.0f / kFrameTextureHeight);
 
 	GLRender_InitMatrices();
+glEnable(GL_TEXTURE_2D);
+#ifdef __3DS__
+	glBegin(GL_TRIANGLES);
+	glTexCoord2f(umax,    0); glVertex3f(vw,  0, 0);
+	glTexCoord2f(umax, vmax); glVertex3f(vw, vh, 0);
+	glTexCoord2f(   0, vmax); glVertex3f( 0, vh, 0);
 
+	glTexCoord2f(umax,    0); glVertex3f(vw,  0, 0);
+	glTexCoord2f(   0, vmax); glVertex3f( 0, vh, 0);
+	glTexCoord2f(   0,    0); glVertex3f( 0,  0, 0);
+	glEnd();
+#else
 	glBegin(GL_QUADS);
 	glTexCoord2f(   0, vmax); glVertex3f( 0, vh, 0);
 	glTexCoord2f(umax, vmax); glVertex3f(vw, vh, 0);
@@ -429,6 +442,7 @@ void GLRender_PresentFramebuffer(void)
 	glTexCoord2f(   0,    0); glVertex3f( 0,  0, 0);
 	glEnd();
 	CHECK_GL_ERROR();
+#endif
 
 #ifdef __3DS__
 	WaitForVBlank3ds();
