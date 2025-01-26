@@ -200,8 +200,8 @@ void OnChangePlayfieldSize(void)
 		GAME_ASSERT_MESSAGE(false, "OnChangePlayfieldSize: Unsupported pfSize!");
 	}
 #ifdef __3DS__
-	VISIBLE_WIDTH = 400;
-	VISIBLE_HEIGHT = 320;
+	VISIBLE_WIDTH = 640;
+	VISIBLE_HEIGHT = 512;
 #else
 	if (gGamePrefs.pfSize != PFSIZE_SMALL)
 	{

@@ -74,7 +74,11 @@ PFNGLUNMAPBUFFERARBPROC glUnmapBufferARB;
 
 static SDL_GLContext gGLContext = NULL;
 static GLuint gFrameTexture = 0;
+#ifdef __3DS__
+static void* gFramePBO = NULL;
+#else
 static GLuint gFramePBO = 0;
+#endif
 static GLint gMaxTextureSize = 0;
 
 const char* gRendererName = "NULL";
@@ -139,7 +143,8 @@ static void InitTextureAndPBO(int pixelZoom)
 	CHECK_GL_ERROR();
 
 #ifdef __3DS__
-	gFramePBO = 0;
+	gFramePBO = malloc(kFrameTextureWidth * kFrameTextureHeight
+						* kFrameBytesPerPixel * (pixelZoom*pixelZoom));
 #else
 	glGenBuffersARB(1, &gFramePBO);
 	CHECK_GL_ERROR();
@@ -187,7 +192,9 @@ static void DeleteTextureAndPBO(void)
 		gFrameTexture = 0;
 	}
 
-#ifndef __3DS__
+#ifdef __3DS__
+	free(gFramePBO);
+#else
 	if (gFramePBO != 0)
 	{
 		glDeleteBuffersARB(1, &gFramePBO);
@@ -357,8 +364,9 @@ void GLRender_PresentFramebuffer(void)
 	//-------------------------------------------------------------------------
 	// Update PBO
 
-#ifndef __3DS__
-	// TODO: for 3ds?
+#ifdef __3DS__
+	ConvertFramebufferMT(gFramePBO);
+#else
 	glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gFramePBO);
 	CHECK_GL_ERROR();
 
@@ -401,8 +409,12 @@ void GLRender_PresentFramebuffer(void)
 
 #if !DEFERRED_TEX_UPDATE
 	// Update the texture
+#ifdef __3DS__
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, zvw, zvh, kFramePixelFormat, kFramePixelType, gFramePBO);
+#else
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, zvw, zvh, kFramePixelFormat, kFramePixelType, NULL);
 	CHECK_GL_ERROR();
+#endif
 #endif
 
 	const float umax = vw * (1.0f / kFrameTextureWidth);
@@ -428,9 +440,12 @@ void GLRender_PresentFramebuffer(void)
 #if DEFERRED_TEX_UPDATE
 	//-------------------------------------------------------------------------
 	// Update texture
-
+#ifdef __3DS__
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, zvw, zvh, kFramePixelFormat, kFramePixelType, gFramePBO);
+#else
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, zvw, zvh, kFramePixelFormat, kFramePixelType, NULL);
 	CHECK_GL_ERROR();
+#endif
 #endif
 }
 
