@@ -340,6 +340,7 @@ bool IsCmdQPressed(void)
 
 SDL_GameController* TryOpenController(bool showMessage)
 {
+#ifndef __3DS__
 #if NOJOYSTICK
 	(void) showMessage;
 	return NULL;
@@ -393,6 +394,7 @@ SDL_GameController* TryOpenController(bool showMessage)
 
 	return gSDLController;
 #endif
+#endif // __3DS__
 }
 
 static void OnJoystickRemoved(SDL_JoystickID which)

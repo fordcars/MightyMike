@@ -85,7 +85,9 @@ extern	Boolean					gIsInGame;
 
 #pragma mark - Main.cpp
 
+#ifndef __3DS__
 extern	struct SDL_Window		*gSDLWindow;
+#endif
 extern	FSSpec					gDataSpec;
 extern	int						gNumThreads;
 

@@ -495,7 +495,9 @@ void PresentIndexedFramebuffer(void)
 					gMyX,
 					gMyY
 			);
+#ifndef __3DS__
 			SDL_SetWindowTitle(gSDLWindow, gDebugTextBuffer);
+#endif
 		}
 		gDebugTextFrameAccumulator = 0;
 		gDebugTextLastUpdatedAt = ticksNow;
@@ -504,7 +506,7 @@ void PresentIndexedFramebuffer(void)
 
 static void MoveToPreferredDisplay(void)
 {
-#if !(__APPLE__)
+#if !(__APPLE__) && !(__3DS__)
 	int currentDisplay = SDL_GetWindowDisplayIndex(gSDLWindow);
 
 	if (currentDisplay != gGamePrefs.preferredDisplay)
@@ -519,6 +521,7 @@ static void MoveToPreferredDisplay(void)
 
 void SetFullscreenMode(bool enforceDisplayPref)
 {
+#ifndef __3DS__
 #if OSXPPC
 	if (gGamePrefs.displayMode == kDisplayMode_Windowed)
 	{
@@ -566,6 +569,7 @@ void SetFullscreenMode(bool enforceDisplayPref)
 
 	SDL_ShowCursor(gGamePrefs.displayMode == kDisplayMode_Windowed? 1: 0);
 #endif
+#endif // __3DS__
 }
 
 int GetMaxIntegerZoom(int displayWidth, int displayHeight)
@@ -579,6 +583,9 @@ int GetMaxIntegerZoom(int displayWidth, int displayHeight)
 
 int GetMaxIntegerZoomForPreferredDisplay(void)
 {
+#ifdef __3DS__
+	return GetMaxIntegerZoom(VISIBLE_WIDTH, VISIBLE_HEIGHT);
+#else
 	int currentDisplay = SDL_GetWindowDisplayIndex(gSDLWindow);
 
 #if !(__APPLE__)
@@ -595,10 +602,12 @@ int GetMaxIntegerZoomForPreferredDisplay(void)
 #endif
 
 	return GetMaxIntegerZoom(displayBounds.w, displayBounds.h);
+#endif
 }
 
 void SetOptimalWindowSize(void)
 {
+#ifndef __3DS__
 	Uint32 windowFlags = SDL_GetWindowFlags(gSDLWindow);
 	SDL_RestoreWindow(gSDLWindow);
 
@@ -624,10 +633,15 @@ void SetOptimalWindowSize(void)
 	{
 		SDL_MaximizeWindow(gSDLWindow);
 	}
+#endif
 }
 
 static int GetEffectiveScalingType(void)
 {
+#ifdef __3DS__
+	return kScaling_Stretch;
+#else
+
 	int windowWidth = VISIBLE_WIDTH;
 	int windowHeight = VISIBLE_HEIGHT;
 
@@ -678,6 +692,7 @@ static int GetEffectiveScalingType(void)
 			return gCanDoHQStretch ? kScaling_HQStretch : kScaling_Stretch;
 		}
 	}
+#endif
 }
 
 void OnChangeIntegerScaling(void)

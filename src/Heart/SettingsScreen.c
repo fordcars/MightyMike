@@ -592,7 +592,9 @@ static void OnChangePlayfieldSizeViaSettings(void)
 
 static void OnChangeDebugInfoInTitleBar(void)
 {
+#ifndef __3DS__
 	SDL_SetWindowTitle(gSDLWindow, "Mighty Mike " PROJECT_VERSION);
+#endif
 }
 
 static void OnResetKeys(void)

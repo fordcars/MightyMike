@@ -199,7 +199,10 @@ void OnChangePlayfieldSize(void)
 	default:
 		GAME_ASSERT_MESSAGE(false, "OnChangePlayfieldSize: Unsupported pfSize!");
 	}
-
+#ifdef __3DS__
+	VISIBLE_WIDTH = 400;
+	VISIBLE_HEIGHT = 320;
+#else
 	if (gGamePrefs.pfSize != PFSIZE_SMALL)
 	{
 		VISIBLE_WIDTH = (PF_TILE_WIDTH - 1) * TILE_SIZE;
@@ -213,6 +216,7 @@ void OnChangePlayfieldSize(void)
 
 	GAME_ASSERT(VISIBLE_WIDTH >= 640);
 	GAME_ASSERT(VISIBLE_HEIGHT >= 480);
+#endif
 
 	SetOptimalWindowSize();
 

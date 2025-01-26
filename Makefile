@@ -33,8 +33,9 @@ include $(DEVKITARM)/3ds_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	MightyMike
 BUILD		:=	build
-SOURCES		:=	src src/Drivers src/Enemies src/Heart src/MeAndMo src/Misc src/Playfield
-DATA		:=	other_data
+SOURCES		:=	src src/Drivers src/Enemies/Bargain src/Enemies/Candy src/Enemies/Clown \
+				src/Enemies/Fairy src/Enemies/Jurassic src/Heart src/MeAndMo src/Misc src/Playfield
+# DATA		:=	other_data
 INCLUDES	:=	src/Headers extern extern/Pomme/src extern/Pomme/src/QD3D extern/Pomme/extern/picaGL/include
 GRAPHICS	:=	gfx
 GFXBUILD	:=	$(BUILD)
@@ -54,7 +55,7 @@ CFLAGS	:=	-Wall -O2 -mword-relocations \
 			-ffunction-sections \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -D__3DS__ -DENABLE_LOADING_SCREEN -I/opt/devkitpro/portlibs/3ds/include/SDL2 \
+CFLAGS	+=	$(INCLUDE) -D__3DS__ -DGLRENDER -I/opt/devkitpro/portlibs/3ds/include/SDL2 \
 			-Wno-multichar -Wno-unused-function -Wno-unused-const-variable -Wno-unknown-pragmas
 
 CXXFLAGS	:= $(CFLAGS) -fexceptions
@@ -62,7 +63,7 @@ CXXFLAGS	:= $(CFLAGS) -fexceptions
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:=  -lSDL2main -lSDL2 -L/home/fcdev/Documents/Github/Bugdom/extern/Pomme/lib -lPomme -L/home/fcdev/Documents/Github/Bugdom/extern/Pomme/extern/picaGL/lib -lpicaGL -lctru -lm
+LIBS	:=  -lSDL2main -lSDL2 -L/home/fcdev/Documents/Github/MightyMike/extern/Pomme/lib -lPomme -L/home/fcdev/Documents/Github/MightyMike/extern/Pomme/extern/picaGL/lib -lpicaGL -lctru -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

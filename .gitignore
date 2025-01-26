@@ -1,14 +1,14 @@
 # External libraries
 extern/SDL*
 
-# Downloaded library cache
-cache/
+# External library cache
+/cache
 
 # Build directories
 /build*/
 /cmake-build*/
-/out/
 /dist/
+/out/
 
 # IDEs
 .vs/
@@ -18,3 +18,7 @@ cache/
 # macOS metadata
 .DS_Store
 
+# 3DS
+*.3dsx
+*.elf
+*.smdh

@@ -38,6 +38,10 @@ PFNGLBUFFERDATAARBPROC glBufferDataARB;
 PFNGLUNMAPBUFFERARBPROC glUnmapBufferARB;
 #endif
 
+#ifdef __3DS__
+	#include "Platform/3ds/Pomme3ds.h"
+#endif
+
 // Marginal FPS increase at the cost of 1 frame of latency
 #define DEFERRED_TEX_UPDATE 0
 
@@ -195,11 +199,13 @@ void GLRender_Init(void)
 	gRendererName = "gl??";
 #endif
 
+#ifndef __3DS__
 	gGLContext = SDL_GL_CreateContext(gSDLWindow);
 	GAME_ASSERT(gGLContext);
 
 	int mkc = SDL_GL_MakeCurrent(gSDLWindow, gGLContext);
 	GAME_ASSERT_MESSAGE(mkc == 0, SDL_GetError());
+#endif
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gMaxTextureSize);
 	printf("Max texture size: %d\n", (int) gMaxTextureSize);
@@ -274,7 +280,9 @@ static SDL_Rect GetViewportSize(void)
 
 	int dw = 0;
 	int dh = 0;
+#ifndef __3DS__
 	SDL_GL_GetDrawableSize(gSDLWindow, &dw, &dh);	// DON'T use SDL_GetWindowSize as it returns fake scaled pixels in HiDPI displays
+#endif
 
 	SDL_Point size;
 	if (gEffectiveScalingType == kScaling_PixelPerfect)
@@ -305,8 +313,10 @@ void GLRender_PresentFramebuffer(void)
 	const int vw = VISIBLE_WIDTH;
 	const int vh = VISIBLE_HEIGHT;
 
+#ifndef __3DS__
 	int mkc = SDL_GL_MakeCurrent(gSDLWindow, gGLContext);
 	GAME_ASSERT_MESSAGE(mkc == 0, SDL_GetError());
+#endif
 
 	//-------------------------------------------------------------------------
 	// Update dimensions
@@ -392,7 +402,12 @@ void GLRender_PresentFramebuffer(void)
 	glEnd();
 	CHECK_GL_ERROR();
 
+#ifdef __3DS__
+	WaitForVBlank3ds();
+	SwapBuffers3ds();
+#else
 	SDL_GL_SwapWindow(gSDLWindow);
+#endif
 
 #if DEFERRED_TEX_UPDATE
 	//-------------------------------------------------------------------------
