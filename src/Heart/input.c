@@ -21,6 +21,10 @@
 #include "structures.h"
 #include "externs.h"
 
+#ifdef __3DS__
+	#include "Platform/3ds/Pomme3ds.h"
+#endif
+
 /**********************/
 /*     PROTOTYPES     */
 /**********************/
@@ -104,6 +108,44 @@ void UpdateInput(void)
 	/**********************/
 	/* DO SDL MAINTENANCE */
 	/**********************/
+
+#ifdef __3DS__
+	ScanInput3ds();
+
+	unsigned downButtons = GetHeldButtons3ds();
+
+	for (int i = 0; i < NUM_CONTROL_NEEDS; i++)
+	{
+		bool downNow = false;
+		switch(i)
+		{
+
+			case kNeed_UIPause:     downNow = downButtons & POMME_3DS_KEY_START;  break;
+			case kNeed_Radar:       downNow = downButtons & POMME_3DS_KEY_SELECT; break;
+
+			case kNeed_NextWeapon:  downNow = downButtons & POMME_3DS_KEY_R;      break;
+			case kNeed_PrevWeapon:  downNow = downButtons & POMME_3DS_KEY_L;      break;
+
+			case kNeed_Attack:
+				downNow = (downButtons & POMME_3DS_KEY_A) || (downButtons & POMME_3DS_KEY_B) ||
+							(downButtons & POMME_3DS_KEY_X) || (downButtons & POMME_3DS_KEY_Y);
+				break;
+
+			case kNeed_Up:          downNow = downButtons & POMME_3DS_KEY_DUP;    break;
+			case kNeed_Down:        downNow = downButtons & POMME_3DS_KEY_DDOWN;  break;
+			case kNeed_Left:        downNow = downButtons & POMME_3DS_KEY_DLEFT;  break;
+			case kNeed_Right:       downNow = downButtons & POMME_3DS_KEY_DRIGHT; break;
+			
+			case kNeed_UIUp:        downNow = downButtons & POMME_3DS_KEY_DUP;    break;
+			case kNeed_UIDown:      downNow = downButtons & POMME_3DS_KEY_DDOWN;  break;
+			case kNeed_UILeft:      downNow = downButtons & POMME_3DS_KEY_DLEFT;  break;
+			case kNeed_UIRight:     downNow = downButtons & POMME_3DS_KEY_DRIGHT; break;
+			case kNeed_UIBack:      downNow = downButtons & POMME_3DS_KEY_B;      break;
+			case kNeed_UIConfirm:   downNow = downButtons & POMME_3DS_KEY_A;      break;
+		}
+		UpdateKeyState(&gNeedStates[i], downNow);
+	}
+#else
 
 	int mouseWheelDelta = 0;
 
@@ -245,6 +287,7 @@ void UpdateInput(void)
 
 		UpdateKeyState(&gNeedStates[i], downNow);
 	}
+#endif // __3DS__
 }
 
 void ClearInput(void)
@@ -340,8 +383,7 @@ bool IsCmdQPressed(void)
 
 SDL_GameController* TryOpenController(bool showMessage)
 {
-#ifndef __3DS__
-#if NOJOYSTICK
+#if NOJOYSTICK || __3DS__
 	(void) showMessage;
 	return NULL;
 #else
@@ -394,12 +436,11 @@ SDL_GameController* TryOpenController(bool showMessage)
 
 	return gSDLController;
 #endif
-#endif // __3DS__
 }
 
 static void OnJoystickRemoved(SDL_JoystickID which)
 {
-#if NOJOYSTICK
+#if NOJOYSTICK || __3DS__
 	(void) which;
 #else
 	if (NULL == gSDLController)		// don't care, I didn't open any controller
@@ -432,6 +473,10 @@ int32_t GetLeftStickMagnitude_Fix32(void)
 #if NOJOYSTICK
 	return 0;
 #else
+#ifdef __3DS__
+	float dxRaw = Get3dsCPadX() * 32767.0f;
+	float dyRaw = Get3dsCPadY() * 32767.0f;
+#else
 	if (!gSDLController)
 	{
 		return 0;
@@ -439,7 +484,7 @@ int32_t GetLeftStickMagnitude_Fix32(void)
 
 	int dxRaw = (int) SDL_GameControllerGetAxis(gSDLController, SDL_CONTROLLER_AXIS_LEFTX);
 	int dyRaw = (int) SDL_GameControllerGetAxis(gSDLController, SDL_CONTROLLER_AXIS_LEFTY);
-
+#endif
 	int magnitudeSquared = dxRaw * dxRaw + dyRaw * dyRaw;
 
 	if (magnitudeSquared < kJoystickDeadZone * kJoystickDeadZone)
@@ -456,6 +501,14 @@ short GetRightStick8WayAim(void)
 #if NOJOYSTICK
 	return -1;
 #else
+#ifdef __3DS__
+	// Use 4 buttons to simulate D-Pad
+	unsigned downButtons = GetHeldButtons3ds();
+	bool right	= downButtons & POMME_3DS_KEY_A;
+	bool left	= downButtons & POMME_3DS_KEY_Y;
+	bool down	= downButtons & POMME_3DS_KEY_B;
+	bool up		= downButtons & POMME_3DS_KEY_X;
+#else
 	if (!gSDLController)
 	{
 		return AIM_NONE;
@@ -468,6 +521,7 @@ short GetRightStick8WayAim(void)
 	bool left	= dxRaw < -kJoystickDeadZone;
 	bool down	= dyRaw > kJoystickDeadZone;
 	bool up		= dyRaw < -kJoystickDeadZone;
+#endif
 
 	if (down)
 	{
