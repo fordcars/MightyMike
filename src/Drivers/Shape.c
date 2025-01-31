@@ -17,6 +17,10 @@
 #include <string.h>
 #include "externs.h"
 
+#ifdef __3DS__
+#include <GL/gl.h>
+#endif
+
 /****************************/
 /*    PROTOTYPES            */
 /****************************/
@@ -516,6 +520,16 @@ const uint8_t*	srcPtr;
 
 	x += gScreenXOffset;							// global centering offset
 	y += gScreenYOffset;
+
+#ifdef __3DS__
+	glBegin(GL_TRIANGLE_FAN);
+		glVertex2f(x, y);
+		glVertex2f(x, y+height);
+		glVertex2f(x+width, y+height);
+		glVertex2f(x+width, y);
+	glEnd();
+	return;
+#endif
 
 	oldBox = theNodePtr->drawBox;						// remember old box
 
