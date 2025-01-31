@@ -252,10 +252,12 @@ void GLRender_Init(void)
 	GL_GET_PROC_ADDRESS(PFNGLBUFFERDATAARBPROC, glBufferDataARB);
 #endif
 
+#ifndef __3DS__
 #if !(NOVSYNC)
 	SDL_GL_SetSwapInterval(1);
 #else
 	SDL_GL_SetSwapInterval(0);
+#endif
 #endif
 
 	GLRender_InitMatrices();
@@ -328,6 +330,21 @@ static SDL_Rect GetViewportSize(void)
 
 void GLRender_PresentFramebuffer(void)
 {
+#ifdef __3DS__
+	WaitForVBlank3ds();
+	SwapBuffers3ds();
+
+	// TMP:
+	glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
+	glBegin(GL_TRIANGLES);
+		glVertex2f(0, 0);
+		glVertex2f( 300, 0);
+		glVertex2f( 200,  300);
+	glEnd();
+#else
 	static SDL_Rect previousViewportRect = {0};
 	static int previousEffectiveScalingType = kScaling_Unspecified;
 	static int needClear = 60;
@@ -335,10 +352,8 @@ void GLRender_PresentFramebuffer(void)
 	const int vw = VISIBLE_WIDTH;
 	const int vh = VISIBLE_HEIGHT;
 
-#ifndef __3DS__
 	int mkc = SDL_GL_MakeCurrent(gSDLWindow, gGLContext);
 	GAME_ASSERT_MESSAGE(mkc == 0, SDL_GetError());
-#endif
 
 	//-------------------------------------------------------------------------
 	// Update dimensions
@@ -366,9 +381,6 @@ void GLRender_PresentFramebuffer(void)
 	//-------------------------------------------------------------------------
 	// Update PBO
 
-#ifdef __3DS__
-	ConvertFramebufferMT(gFramePBO);
-#else
 	glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gFramePBO);
 	CHECK_GL_ERROR();
 
@@ -385,7 +397,6 @@ void GLRender_PresentFramebuffer(void)
 	ConvertFramebufferMT(mappedBuffer);
 
 	glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-#endif
 	CHECK_GL_ERROR();
 
 	//-------------------------------------------------------------------------
@@ -411,30 +422,14 @@ void GLRender_PresentFramebuffer(void)
 
 #if !DEFERRED_TEX_UPDATE
 	// Update the texture
-#ifdef __3DS__
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, zvw, zvh, kFramePixelFormat, kFramePixelType, gFramePBO);
-#else
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, zvw, zvh, kFramePixelFormat, kFramePixelType, NULL);
 	CHECK_GL_ERROR();
-#endif
 #endif
 
 	const float umax = vw * (1.0f / kFrameTextureWidth);
 	const float vmax = vh * (1.0f / kFrameTextureHeight);
 
 	GLRender_InitMatrices();
-glEnable(GL_TEXTURE_2D);
-#ifdef __3DS__
-	glBegin(GL_TRIANGLES);
-	glTexCoord2f(umax,    0); glVertex3f(vw,  0, 0);
-	glTexCoord2f(umax, vmax); glVertex3f(vw, vh, 0);
-	glTexCoord2f(   0, vmax); glVertex3f( 0, vh, 0);
-
-	glTexCoord2f(umax,    0); glVertex3f(vw,  0, 0);
-	glTexCoord2f(   0, vmax); glVertex3f( 0, vh, 0);
-	glTexCoord2f(   0,    0); glVertex3f( 0,  0, 0);
-	glEnd();
-#else
 	glBegin(GL_QUADS);
 	glTexCoord2f(   0, vmax); glVertex3f( 0, vh, 0);
 	glTexCoord2f(umax, vmax); glVertex3f(vw, vh, 0);
@@ -442,25 +437,17 @@ glEnable(GL_TEXTURE_2D);
 	glTexCoord2f(   0,    0); glVertex3f( 0,  0, 0);
 	glEnd();
 	CHECK_GL_ERROR();
-#endif
 
-#ifdef __3DS__
-	WaitForVBlank3ds();
-	SwapBuffers3ds();
-#else
 	SDL_GL_SwapWindow(gSDLWindow);
-#endif
 
 #if DEFERRED_TEX_UPDATE
 	//-------------------------------------------------------------------------
 	// Update texture
-#ifdef __3DS__
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, zvw, zvh, kFramePixelFormat, kFramePixelType, gFramePBO);
-#else
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, zvw, zvh, kFramePixelFormat, kFramePixelType, NULL);
 	CHECK_GL_ERROR();
 #endif
-#endif
+
+#endif // __3DS__
 }
 
 #endif // GLRENDER
